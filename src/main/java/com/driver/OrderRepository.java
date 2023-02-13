@@ -34,15 +34,35 @@ public class OrderRepository {
     }
 
     public void addOrderPartnerPair(String orderId, String partnerId) {
-        orderPairDb.put(orderId,partnerId);
+        if (orderDb.containsKey(orderId) && deliveryPartnerDb.containsKey(partnerId)) {
+
+            orderPairDb.put(orderId, partnerId);
+            //need to increase the order count 1 for the partner
+            int orderHave = deliveryPartnerDb.get(partnerId).getNumberOfOrders();
+            orderHave++;
+            deliveryPartnerDb.get(partnerId).setNumberOfOrders(orderHave);
+            //we also need to make a pair with the partner db and list of the orders
+            if (partnerPairDb.containsKey(partnerId)) {
+                //simply add the new order to the list in partner
+                partnerPairDb.get(partnerId).add(orderId);
+            } else {
+                List<String> orderList = new ArrayList<>();
+                orderList.add(orderId);
+                partnerPairDb.put(partnerId, orderList);
+            }
+        }
     }
 
     public Order getOrderById(String orderId) {
-        return orderDb.get(orderId);
+        if(orderDb.containsKey(orderId))
+           return orderDb.get(orderId);
+        return new Order();
     }
 
     public DeliveryPartner getPartnerById(String partnerId) {
-        return deliveryPartnerDb.get(partnerId);
+        if(deliveryPartnerDb.containsKey(partnerId))
+           return deliveryPartnerDb.get(partnerId);
+        return new DeliveryPartner();
     }
 
     public Integer getOrderCountByPartnerId(String partnerId) {
@@ -50,15 +70,10 @@ public class OrderRepository {
     }
 
     public List<String> getOrdersByPartnerId(String partnerId) {
-
-        List<String> orders = partnerPairDb.getOrDefault(partnerId,new ArrayList<>());
-        for(String you : orderPairDb.keySet()){
-            if(orderPairDb.get(you).equals(partnerId)){
-                orders.add(you);
-            }
+        if(!partnerPairDb.containsKey(partnerId)){
+            return new ArrayList<String>();
         }
-
-        return orders;
+        return partnerPairDb.get(partnerId);
     }
 
     public List<String> getAllOrders() {
@@ -95,8 +110,25 @@ public class OrderRepository {
     }
 
     public void deleteOrderById(String orderId) {
+        String partnerAssigned = orderPairDb.get(orderId); //getting obj
+        //delete order id from partner assigned list
+        List<String> orderHave = deleteOrder(partnerAssigned,orderId);
+        partnerPairDb.put(partnerAssigned,orderHave);
+        //decrease a order from the assigned order number
+        int numberOfOrder = deliveryPartnerDb.get(partnerAssigned).getNumberOfOrders();
+        numberOfOrder--;
+        deliveryPartnerDb.get(partnerAssigned).setNumberOfOrders(numberOfOrder);
         orderPairDb.remove(orderId);
         orderDb.remove(orderId);
+    }
+    public List<String> deleteOrder(String partnerAssigned, String orderId){
+        List<String> order = new ArrayList<>();
+        for(String h : partnerPairDb.get(partnerAssigned)){
+            if(!h.equals(orderId)){
+                order.add(h);
+            }
+        }
+        return order;
     }
 
     public void deletePartnerById(String partnerId) {
@@ -113,7 +145,16 @@ public class OrderRepository {
             if(time>max)
                 max = time;
         }
-
-        return (String.valueOf(max));
+        //now we have last time
+        String HH = String.valueOf(max/60);
+        String MM = String.valueOf(max%60);
+        if(HH.length()==1){
+            HH = "0"+HH;
+        }
+        if(MM.length()==1)
+        {
+            MM="0"+MM;
+        }
+        return (HH+":"+MM);
     }
 }
