@@ -108,7 +108,7 @@ public class OrderRepository {
 
             return count;
         }
-        return 0;
+        return -1;
     }
 
     public void deleteOrderById(String orderId) {
@@ -134,8 +134,10 @@ public class OrderRepository {
     }
 
     public void deletePartnerById(String partnerId) {
-     partnerPairDb.remove(partnerId);
-     deliveryPartnerDb.remove(partnerId);
+        if(deliveryPartnerDb.containsKey(partnerId)) {
+            partnerPairDb.remove(partnerId);
+            deliveryPartnerDb.remove(partnerId);
+        }
     }
 
     public String getLastDeliveryTimeByPartnerId(String partnerId) {
@@ -144,12 +146,11 @@ public class OrderRepository {
             List<String> orders = partnerPairDb.get(partnerId);
             int time = 0;
             int max = 0;
-            for (String you : orderPairDb.keySet()) {
+            for (String you : orders) {
                 time = orderDb.get(you).getDeliveryTime();
-                if (time > max)
-                    max = time;
+                max = Math.max(max,time);
             }
-            //now we have last time
+            //now we have last time in max variable
             String HH = String.valueOf(max / 60);
             String MM = String.valueOf(max % 60);
             if (HH.length() == 1) {
