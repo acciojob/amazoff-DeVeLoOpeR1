@@ -89,24 +89,26 @@ public class OrderRepository {
     }
 
     public Integer getOrdersLeftAfterGivenTimeByPartnerId(String time, String partnerId) {
-        if(partnerPairDb.containsKey(partnerId)){
-            return 0;
+        if(partnerPairDb.containsKey(partnerId)) {
+
+            String[] arr = time.split(":");
+
+            int HH = Integer.parseInt(arr[0]);
+            int MM = Integer.parseInt(arr[1]);
+
+            int givenTime = (HH * 60) + MM;
+            int count = 0;
+            List<String> l1 = partnerPairDb.get(partnerId);
+            for (String h : l1) {
+                int temp = orderDb.get(h).getDeliveryTime();
+                if (temp > givenTime)
+                    count++;
+
+            }
+
+            return count;
         }
-        String[] arr = time.split(":");
-
-        int HH = Integer.parseInt(arr[0]);
-        int MM = Integer.parseInt(arr[1]);
-
-        int givenTime = (HH*60) + MM;
-        int count = 0;
-        List<String> l1 = partnerPairDb.get(partnerId);
-        for(String h : l1){
-            int temp = orderDb.get(h).getDeliveryTime();
-            if(temp > givenTime)
-                count++;
-
-        }
-        return count;
+        return 0;
     }
 
     public void deleteOrderById(String orderId) {
@@ -132,29 +134,32 @@ public class OrderRepository {
     }
 
     public void deletePartnerById(String partnerId) {
-    partnerPairDb.get(partnerId);
-    deliveryPartnerDb.get(partnerId);
+     partnerPairDb.remove(partnerId);
+     deliveryPartnerDb.remove(partnerId);
     }
 
     public String getLastDeliveryTimeByPartnerId(String partnerId) {
-        List<String> orders = partnerPairDb.get(partnerId);
-        int time = 0;
-        int max = 0;
-        for(String you : orderPairDb.keySet()){
-            time = orderDb.get(you).getDeliveryTime();
-            if(time>max)
-                max = time;
+        if(deliveryPartnerDb.containsKey(partnerId)) {
+
+            List<String> orders = partnerPairDb.get(partnerId);
+            int time = 0;
+            int max = 0;
+            for (String you : orderPairDb.keySet()) {
+                time = orderDb.get(you).getDeliveryTime();
+                if (time > max)
+                    max = time;
+            }
+            //now we have last time
+            String HH = String.valueOf(max / 60);
+            String MM = String.valueOf(max % 60);
+            if (HH.length() == 1) {
+                HH = "0" + HH;
+            }
+            if (MM.length() == 1) {
+                MM = "0" + MM;
+            }
+            return (HH + ":" + MM);
         }
-        //now we have last time
-        String HH = String.valueOf(max/60);
-        String MM = String.valueOf(max%60);
-        if(HH.length()==1){
-            HH = "0"+HH;
-        }
-        if(MM.length()==1)
-        {
-            MM="0"+MM;
-        }
-        return (HH+":"+MM);
+        return "";
     }
 }
