@@ -135,8 +135,13 @@ public class OrderRepository {
 
     public void deletePartnerById(String partnerId) {
         if(deliveryPartnerDb.containsKey(partnerId)) {
-            partnerPairDb.remove(partnerId);
             deliveryPartnerDb.remove(partnerId);
+            List<String> l = partnerPairDb.get(partnerId);
+            for(String ord :l){
+                if(orderPairDb.get(ord).equals(partnerId))
+                    orderPairDb.remove(ord);//remove that order from order and partner pair
+            }
+            partnerPairDb.remove(partnerId);
         }
     }
 
